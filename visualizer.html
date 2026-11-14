@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>2. Seamless Video Visualizer</title>
+<style>
+*{box-sizing:border-box;font-family:system-ui,sans-serif}body{background:#121212;color:#f0f0f0;margin:0;padding:12px}.container{max-width:650px;margin:0 auto}.back{color:#facc15;text-decoration:none;font-size:.85rem;font-weight:700;display:inline-block;margin-bottom:8px}h1{font-size:1.2rem;color:#facc15;margin:0 0 10px}.card{background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:12px}label{display:block;font-size:.8rem;font-weight:600;color:#d4d4d4;margin-bottom:4px}input,select,textarea{width:100%;background:#2a2a2a;color:#fff;border:1px solid #404040;border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:9px}input[type="range"]{padding:0;accent-color:#facc15}.row{display:flex;gap:8px}.row>div{flex:1}canvas{width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;border:1px solid #3f3f46;display:block;margin-bottom:10px}button{width:100%;padding:11px;border:none;border-radius:8px;font-weight:700;font-size:.92rem;cursor:pointer;margin-bottom:8px}.btn-play{background:#3b82f6;color:#fff}.btn-rec{background:linear-gradient(135deg,#facc15,#eab308);color:#121212}.btn-stop{background:#ef4444;color:#fff;display:none}.status{text-align:center;font-size:.82rem;color:#86efac;font-weight:600}
+</style>
+</head>
+<body>
+<div class="container">
+<a href="index.html" class="back">← Kembali ke Menu</a>
+<h1>🎬 Pro Music Visualizer (Full FX)</h1>
+<canvas id="cv" width="1280" height="720"></canvas>
+<div class="card">
+<div class="row">
+<div><label>1. Audio Lagu (MP3/WAV)</label><input type="file" id="audFile" accept="audio/*"></div>
+<div><label>2. Video Loop (5-15 dtk MP4)</label><input type="file" id="vidFile" accept="video/*"></div>
+</div>
+<div class="row">
+<div><label>Judul Lagu</label><input type="text" id="titleTxt" value="MIDNIGHT HORIZON"></div>
+<div><label>Subjudul / Genre</label><input type="text" id="subTxt" value="DEEP HOUSE • STUDIO MIX"></div>
+</div>
+<div class="row">
+<div><label>Ukuran Judul: <span id="tSizeVal">56</span>px</label><input type="range" id="titleSize" min="28" max="110" value="56" oninput="document.getElementById('tSizeVal').innerText=this.value"></div>
+<div><label>Ukuran Lirik: <span id="lSizeVal">38</span>px</label><input type="range" id="lyricSize" min="20" max="80" value="38" oninput="document.getElementById('lSizeVal').innerText=this.value"></div>
+</div>
+<div class="row">
+<div><label>Gaya Visualizer</label><select id="vizStyle"><option value="both">Lingkaran + Bar Bawah</option><option value="circle">Lingkaran Bass-Reactive</option><option value="bars">Bar Equalizer Bawah</option></select></div>
+<div><label>Warna Spectrum</label><select id="colorMode"><option value="rainbow">🌈 Pelangi Multi-Warna</option><option value="neon_dual">🔮 Gradasi Cyan-Pink</option><option value="fire">🔥 Api Merah-Kuning</option><option value="single">🎨 Satu Warna</option></select></div>
+</div>
+<div class="row">
+<div><label>Partikel Animasi</label><select id="partType"><option value="stars">✨ Bintang (Stars)</option><option value="rain">🌧️ Hujan (Rain)</option><option value="bubbles">🫧 Gelembung (Bubbles)</option><option value="hearts">💖 Love (Hearts)</option><option value="none">🚫 Tanpa Partikel</option></select></div>
+<div><label>Efek Bingkai Layar</label><select id="frameStyle"><option value="neon_pulse">💡 Bingkai Neon Denyut</option><option value="rainbow_border">🌈 Bingkai Pelangi</option><option value="corners">📐 Sudut Cyberpunk</option><option value="none">🚫 Tanpa Bingkai</option></select></div>
+</div>
+<div class="row">
+<div><label>Warna Utama</label><input type="color" id="glowCol" value="#38bdf8" style="height:36px;padding:2px"></div>
+<div><label>Resolusi Render</label><select id="resSel"><option value="1280x720">720p HD (Ringan & Aman)</option><option value="1920x1080">1080p Full HD</option></select></div>
+</div>
+<label>3. Lirik Lagu (Upload .SRT atau Tempel Lirik Baris per Baris)</label>
+<input type="file" id="srtFile" accept=".srt,.txt">
+<textarea id="lyricInput" rows="3" placeholder="Tempel lirik di sini atau upload file .srt..."></textarea>
+<button class="btn-play" onclick="togglePreview()">▶️ Preview / Jeda</button>
+<button class="btn-rec" id="recBtn" onclick="startRender()">🔴 Mulai Render & Download Video</button>
+<button class="btn-stop" id="stopBtn" onclick="stopRender()">⏹️ Hentikan & Simpan Sekarang</button>
+<div class="status" id="st">Siap. Pilih audio, video loop, dan atur efek visual.</div>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),st=document.getElementById('st');
+let aud=new Audio(),actx,analyser,srcNode,dataArr,isRec=false,recorder,chunks=[],hueShift=0;
+const vA=document.createElement('video'),vB=document.createElement('video');
+[vA,vB].forEach(v=>{v.muted=true;v.playsInline=true;v.preload='auto'});
+let activeVid=vA,nextVid=vB,isFading=false,vidReady=false,srtList=[];
+const particles=Array.from({length:65},()=>({x:Math.random(),y:Math.random(),s:Math.random()*0.7+0.3,v:Math.random()*0.004+0.002,w:Math.random()*6.28}));
+
+document.getElementById('audFile').onchange=e=>{const f=e.target.files[0];if(!f)return;aud.src=URL.createObjectURL(f);document.getElementById('titleTxt').value=f.name.replace(/\.[^/.]+$/,"").toUpperCase();st.innerText='Audio siap: '+f.name};
+document.getElementById('vidFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);vA.src=u;vB.src=u;vA.onloadeddata=()=>{vidReady=true;vA.currentTime=0;vA.play();vA.pause();st.innerText='Video loop siap.'}};
+document.getElementById('srtFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const t=ev.target.result;if(f.name.endsWith('.srt')){parseSRT(t);st.innerText=`SRT dimuat (${srtList.length} baris).`}else{document.getElementById('lyricInput').value=t;srtList=[];st.innerText='Teks lirik dimuat.'}};r.readAsText(f)};
+
+function parseSRT(d){srtList=[];d.trim().split(/\r?\n\r?\n/).forEach(b=>{const l=b.split(/\r?\n/);if(l.length>=3){const m=l[1].match(/(\d+):(\d+):(\d+)[,.](\d+)\s*-->\s*(\d+):(\d+):(\d+)[,.](\d+)/);if(m)srtList.push({start:(+m[1])*3600+(+m[2])*60+(+m[3])+(+m[4])/1000,end:(+m[5])*3600+(+m[6])*60+(+m[7])+(+m[8])/1000,text:l.slice(2).join(' ')})}})}
+function getCurrentLyric(){if(srtList.length){const f=srtList.find(i=>aud.currentTime>=i.start&&aud.currentTime<=i.end);return f?f.text:''}const r=document.getElementById('lyricInput').value.trim();if(!r)return '';const l=r.split('\n').map(x=>x.trim()).filter(x=>x);if(!l.length)return '';if(!aud.duration||isNaN(aud.duration))return l[0];return l[Math.min(l.length-1,Math.floor((aud.currentTime/aud.duration)*l.length))]}
+function initAudio(){if(actx)return;actx=new(window.AudioContext||window.webkitAudioContext)();analyser=actx.createAnalyser();analyser.fftSize=256;srcNode=actx.createMediaElementSource(aud);srcNode.connect(analyser);analyser.connect(actx.destination);dataArr=new Uint8Array(analyser.frequencyBinCount)}
+function togglePreview(){if(!aud.src)return alert('Pilih file audio dulu.');initAudio();if(actx.state==='suspended')actx.resume();if(aud.paused){aud.play();if(vidReady)activeVid.play();st.innerText='Memutar preview...'}else{aud.pause();vA.pause();vB.pause();st.innerText='Dijeda.'}}
+function drawCover(v,a){if(!vidReady||v.readyState<2)return;ctx.save();ctx.globalAlpha=a;const vr=v.videoWidth/v.videoHeight,cr=cv.width/cv.height;let w=cv.width,h=cv.height,x=0,y=0;if(vr>cr){w=h*vr;x=(cv.width-w)/2}else{h=w/vr;y=(cv.height-h)/2}ctx.drawImage(v,x,y,w,h);ctx.restore()}
+function getSpecColor(i,tot){const m=document.getElementById('colorMode').value;if(m==='rainbow')return `hsl(${(i/tot*360+hueShift)%360},95%,60%)`;if(m==='neon_dual'){const g=ctx.createLinearGradient(0,0,cv.width,cv.height);g.addColorStop(0,'#06b6d4');g.addColorStop(1,'#ec4899');return g}if(m==='fire')return `hsl(${(i/tot)*50},100%,55%)`;return document.getElementById('glowCol').value}
+
+function renderLoop(){
+requestAnimationFrame(renderLoop);hueShift=(hueShift+1.5)%360;
+ctx.fillStyle='#09090b';ctx.fillRect(0,0,cv.width,cv.height);
+if(vidReady&&activeVid.duration){const fT=1.2,rem=activeVid.duration-activeVid.currentTime;if(!isFading&&rem<=fT&&!activeVid.paused){isFading=true;nextVid.currentTime=0;nextVid.play()}if(isFading){const p=Math.min(1,Math.max(0,(fT-rem)/fT));drawCover(activeVid,1-p);drawCover(nextVid,p);if(p>=0.98||activeVid.ended){activeVid.pause();activeVid.currentTime=0;const t=activeVid;activeVid=nextVid;nextVid=t;isFading=false}}else drawCover(activeVid,1)}
+ctx.fillStyle='rgba(0,0,0,0.34)';ctx.fillRect(0,0,cv.width,cv.height);
+let bass=0;if(analyser){analyser.getByteFrequencyData(dataArr);for(let i=0;i<12;i++)bass+=dataArr[i];bass=bass/12/255}
+
+const pType=document.getElementById('partType').value;
+if(pType!=='none'){ctx.save();particles.forEach(p=>{const px=p.x*cv.width,py=p.y*cv.height;if(pType==='rain'){p.y+=p.v*4.5*(1+bass);p.x-=0.001;if(p.y>1){p.y=0;p.x=Math.random()}if(p.x<0)p.x=1;ctx.strokeStyle='rgba(186,230,253,0.55)';ctx.lineWidth=2*p.s;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-6,py+22*p.s);ctx.stroke()}else if(pType==='bubbles'){p.y-=p.v*(1+bass*1.5);p.w+=0.03;p.x+=Math.sin(p.w)*0.0015;if(p.y<0){p.y=1;p.x=Math.random()}const r=(10+bass*14)*p.s;ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.fillStyle='rgba(56,189,248,0.18)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fill();ctx.stroke()}else if(pType==='hearts'){p.y-=p.v*(1+bass);p.w+=0.04;p.x+=Math.sin(p.w)*0.002;if(p.y<0){p.y=1;p.x=Math.random()}ctx.fillStyle='rgba(244,63,94,0.75)';ctx.font=`${Math.round((14+bass*16)*p.s)}px sans-serif`;ctx.fillText('❤',px,py)}else if(pType==='stars'){p.y-=p.v*0.5;p.w+=0.06;if(p.y<0){p.y=1;p.x=Math.random()}ctx.fillStyle=`rgba(253,224,71,${0.35+Math.abs(Math.sin(p.w))*0.65})`;ctx.beginPath();ctx.arc(px,py,(3+bass*6)*p.s,0,Math.PI*2);ctx.fill()}});ctx.restore()}
+
+const style=document.getElementById('vizStyle').value,cx=cv.width/2,cy=cv.height*0.42;
+if(style==='circle'||style==='both'){const baseR=cv.height*0.14+(bass*32),bars=64;for(let i=0;i<bars;i++){const val=dataArr?dataArr[i]/255:0.1,r2=baseR+(val*70),ang=(i/bars)*Math.PI*2-Math.PI/2;ctx.strokeStyle=getSpecColor(i,bars);ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(cx+Math.cos(ang)*baseR,cy+Math.sin(ang)*baseR);ctx.lineTo(cx+Math.cos(ang)*r2,cy+Math.sin(ang)*r2);ctx.stroke()}}
+if(style==='bars'||style==='both'){const count=52,bw=(cv.width*0.68)/count,startX=(cv.width-count*bw)/2;for(let i=0;i<count;i++){const val=dataArr?dataArr[i+2]/255:0.08,bh=10+val*(cv.height*0.2);ctx.fillStyle=getSpecColor(i,count);ctx.fillRect(startX+i*bw+2,cv.height*0.91-bh,bw-4,bh)}}
+
+const scale=cv.height/720,tSize=Math.round(parseInt(document.getElementById('titleSize').value)*scale),lSize=Math.round(parseInt(document.getElementById('lyricSize').value)*scale),mainCol=document.getElementById('glowCol').value;
+ctx.save();ctx.textAlign='center';ctx.shadowColor='rgba(0,0,0,0.85)';ctx.shadowBlur=12;
+const titleY=(style==='bars')?cv.height*0.36:cy+cv.height*0.26;
+ctx.fillStyle='#fff';ctx.font=`800 ${tSize}px system-ui,sans-serif`;ctx.fillText(document.getElementById('titleTxt').value,cx,titleY);
+ctx.fillStyle=mainCol;ctx.font=`700 ${Math.round(tSize*0.45)}px system-ui,sans-serif`;ctx.fillText(document.getElementById('subTxt').value,cx,titleY+tSize*0.58);
+const curLyric=getCurrentLyric();if(curLyric){ctx.fillStyle='#facc15';ctx.font=`700 ${lSize}px system-ui,sans-serif`;ctx.fillText(curLyric,cx,(style==='bars')?cv.height*0.56:titleY+tSize*1.25,cv.width*0.86)}
+ctx.restore();
+
+const fStyle=document.getElementById('frameStyle').value,pad=18;
+if(fStyle!=='none'){ctx.save();if(fStyle==='neon_pulse'){ctx.strokeStyle=mainCol;ctx.shadowColor=mainCol;ctx.shadowBlur=15+bass*25;ctx.lineWidth=4+bass*6;ctx.strokeRect(pad,pad,cv.width-pad*2,cv.height-pad*2)}else if(fStyle==='rainbow_border'){const g=ctx.createLinearGradient(0,0,cv.width,cv.height);g.addColorStop(0,`hsl(${hueShift%360},95%,60%)`);g.addColorStop(0.5,`hsl(${(hueShift+120)%360},95%,60%)`);g.addColorStop(1,`hsl(${(hueShift+240)%360},95%,60%)`);ctx.strokeStyle=g;ctx.shadowColor='#fff';ctx.shadowBlur=14;ctx.lineWidth=6+bass*5;ctx.strokeRect(pad,pad,cv.width-pad*2,cv.height-pad*2)}else if(fStyle==='corners'){const len=70+bass*30;ctx.strokeStyle=mainCol;ctx.shadowColor=mainCol;ctx.shadowBlur=18;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(pad,pad+len);ctx.lineTo(pad,pad);ctx.lineTo(pad+len,pad);ctx.moveTo(cv.width-pad-len,pad);ctx.lineTo(cv.width-pad,pad);ctx.lineTo(cv.width-pad,pad+len);ctx.moveTo(pad,cv.height-pad-len);ctx.lineTo(pad,cv.height-pad);ctx.lineTo(pad+len,cv.height-pad);ctx.moveTo(cv.width-pad-len,cv.height-pad);ctx.lineTo(cv.width-pad,cv.height-pad);ctx.lineTo(cv.width-pad,cv.height-pad-len);ctx.stroke()}ctx.restore()}
+}
+renderLoop();
+
+function startRender(){
+if(!aud.src)return alert('Pilih file audio dulu.');
+const [w,h]=document.getElementById('resSel').value.split('x').map(Number);cv.width=w;cv.height=h;
+initAudio();if(actx.state==='suspended')actx.resume();
+const vStream=cv.captureStream(30),dest=actx.createMediaStreamDestination();srcNode.connect(dest);
+const combined=new MediaStream([...vStream.getVideoTracks(),...dest.stream.getAudioTracks()]);
+const mime=MediaRecorder.isTypeSupported('video/mp4')?'video/mp4':'video/webm;codecs=vp9,opus';
+chunks=[];recorder=new MediaRecorder(combined,{mimeType:mime,videoBitsPerSecond:4500000});
+recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
+recorder.onstop=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(chunks,{type:mime}));a.download=`${document.getElementById('titleTxt').value||'render'}.${mime.includes('mp4')?'mp4':'webm'}`;a.click();st.innerText='Selesai! File video otomatis terunduh.';isRec=false;document.getElementById('recBtn').style.display='block';document.getElementById('stopBtn').style.display='none'};
+aud.currentTime=0;if(vidReady){activeVid.currentTime=0;activeVid.play()}aud.play();recorder.start();isRec=true;
+document.getElementById('recBtn').style.display='none';document.getElementById('stopBtn').style.display='block';
+st.innerText='🔴 Sedang merender... Biarkan layar HP menyala sampai selesai.';aud.onended=()=>{if(isRec)stopRender()};
+}
+function stopRender(){if(recorder&&recorder.state!=='inactive')recorder.stop();aud.pause();vA.pause();vB.pause()}
+</script>
+</body>
+</html>
