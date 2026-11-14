@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>3. MP4 Playlist Merger</title>
+<style>
+*{box-sizing:border-box;font-family:system-ui,sans-serif}body{background:#121212;color:#f0f0f0;margin:0;padding:12px}.container{max-width:650px;margin:0 auto}.back{color:#facc15;text-decoration:none;font-size:.85rem;font-weight:700;display:inline-block;margin-bottom:8px}h1{font-size:1.2rem;color:#facc15;margin:0 0 10px}.card{background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:12px}label{display:block;font-size:.82rem;font-weight:600;color:#d4d4d4;margin-bottom:5px}input,select,textarea{width:100%;background:#2a2a2a;color:#fff;border:1px solid #404040;border-radius:8px;padding:8px 10px;font-size:.88rem;margin-bottom:10px}.row{display:flex;gap:8px}.row>div{flex:1}canvas{width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;border:1px solid #3f3f46;display:block;margin-bottom:10px}button{width:100%;padding:11px;border:none;border-radius:8px;font-weight:700;font-size:.94rem;cursor:pointer;margin-bottom:8px}.btn-rec{background:linear-gradient(135deg,#facc15,#eab308);color:#121212}.btn-stop{background:#ef4444;color:#fff;display:none}.copy-btn{background:#27272a;color:#facc15;border:1px solid #facc15;padding:4px 10px;font-size:.78rem;width:auto;float:right;margin-top:-3px;border-radius:6px}.track-item{background:#27272a;padding:8px 10px;border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;font-size:.84rem}.track-btns button{width:auto;padding:4px 8px;margin:0 0 0 4px;font-size:.75rem;background:#3f3f46;color:#fff}.status{text-align:center;font-size:.82rem;color:#86efac;font-weight:600}
+</style>
+</head>
+<body>
+<div class="container">
+<a href="index.html" class="back">← Kembali ke Menu</a>
+<h1>🎞️ MP4 Playlist Merger + Timestamp YT</h1>
+<canvas id="cv" width="1280" height="720"></canvas>
+<div class="card">
+<label>1. Pilih Banyak Video MP4 / WebM Sekaligus</label>
+<input type="file" id="vidFiles" accept="video/*" multiple>
+<div class="row">
+<div><label>Transisi Antar Lagu</label><select id="transType"><option value="fade">Fade Black (0.8 Detik Halus)</option><option value="cut">Langsung Sambung</option></select></div>
+<div><label>Resolusi Output</label><select id="resSel"><option value="1280x720">720p HD (Ringan untuk 30+ Menit)</option><option value="1920x1080">1080p Full HD</option></select></div>
+</div>
+<div id="playlistBox"></div>
+<button class="btn-rec" id="mergeBtn" onclick="startMerge()">🎬 Gabungkan Semua Video & Buat Timestamp</button>
+<button class="btn-stop" id="stopBtn" onclick="stopMerge()">⏹️ Hentikan & Simpan Sementara</button>
+<div class="status" id="st">Pilih 2 atau lebih file video untuk digabungkan.</div>
+</div>
+<div class="card" id="tsCard" style="display:none">
+<button class="copy-btn" onclick="copyTS(this)">Salin Tracklist</button>
+<label>📋 Timestamp Tracklist Otomatis (Siap Tempel ke YouTube)</label>
+<textarea id="tsOut" rows="8" readonly></textarea>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),st=document.getElementById('st');
+let filesArr=[],isMerging=false,recorder,chunks=[],actx,dest,vidEl,srcNode,curIdx=0;
+
+document.getElementById('vidFiles').onchange=async e=>{
+const list=Array.from(e.target.files);if(!list.length)return;st.innerText='⏳ Membaca durasi tiap video...';
+for(const f of list){const dur=await getVideoDuration(f);filesArr.push({file:f,title:f.name.replace(/\.[^/.]+$/,"").replace(/[_-]+/g," "),duration:dur})}
+renderPlaylist();st.innerText=`Total ${filesArr.length} video siap digabung.`;
+};
+function getVideoDuration(file){return new Promise(res=>{const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{URL.revokeObjectURL(v.src);res(v.duration||0)};v.onerror=()=>res(0);v.src=URL.createObjectURL(file)})}
+function fmtTime(sec){const s=Math.floor(sec),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60,pad=n=>String(n).padStart(2,'0');return h>0?`${pad(h)}:${pad(m)}:${pad(ss)}`:`${pad(m)}:${pad(ss)}`}
+function renderPlaylist(){
+const box=document.getElementById('playlistBox'),tsCard=document.getElementById('tsCard'),tsOut=document.getElementById('tsOut');box.innerHTML='';if(!filesArr.length){tsCard.style.display='none';return}
+let accTime=0,tsLines=[];filesArr.forEach((item,i)=>{tsLines.push(`${fmtTime(accTime)} ${item.title}`);accTime+=item.duration;const row=document.createElement('div');row.className='track-item';row.innerHTML=`<span><b>#${i+1}</b> ${item.title} (${fmtTime(item.duration)})</span><div class="track-btns"><button onclick="moveItem(${i},-1)">↑</button><button onclick="moveItem(${i},1)">↓</button><button onclick="delItem(${i})" style="background:#7f1d1d">✕</button></div>`;box.appendChild(row)});
+tsOut.value=`Total Durasi: ${fmtTime(accTime)}\n\nTRACKLIST:\n`+tsLines.join('\n');tsCard.style.display='block';
+}
+function moveItem(i,dir){const ni=i+dir;if(ni<0||ni>=filesArr.length)return;const tmp=filesArr[i];filesArr[i]=filesArr[ni];filesArr[ni]=tmp;renderPlaylist()}
+function delItem(i){filesArr.splice(i,1);renderPlaylist()}
+function drawLoop(){
+if(!isMerging)return;requestAnimationFrame(drawLoop);ctx.fillStyle='#000';ctx.fillRect(0,0,cv.width,cv.height);
+if(vidEl&&vidEl.readyState>=2){const vr=vidEl.videoWidth/vidEl.videoHeight,cr=cv.width/cv.height;let w=cv.width,h=cv.height,x=0,y=0;if(vr>cr){w=h*vr;x=(cv.width-w)/2}else{h=w/vr;y=(cv.height-h)/2}ctx.drawImage(vidEl,x,y,w,h);
+if(document.getElementById('transType').value==='fade'&&vidEl.duration){const rem=vidEl.duration-vidEl.currentTime;let fa=0;if(vidEl.currentTime<0.8)fa=1-(vidEl.currentTime/0.8);else if(rem<0.8)fa=1-(rem/0.8);if(fa>0){ctx.fillStyle=`rgba(0,0,0,${Math.min(1,fa)})`;ctx.fillRect(0,0,cv.width,cv.height)}}
+}
+}
+async function startMerge(){
+if(filesArr.length<2)return alert('Pilih minimal 2 video untuk digabungkan.');const [w,h]=document.getElementById('resSel').value.split('x').map(Number);cv.width=w;cv.height=h;
+vidEl=document.createElement('video');vidEl.playsInline=true;actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')await actx.resume();
+srcNode=actx.createMediaElementSource(vidEl);dest=actx.createMediaStreamDestination();srcNode.connect(dest);srcNode.connect(actx.destination);
+const vStream=cv.captureStream(30),combined=new MediaStream([...vStream.getVideoTracks(),...dest.stream.getAudioTracks()]);
+const mime=MediaRecorder.isTypeSupported('video/mp4')?'video/mp4':'video/webm;codecs=vp9,opus';
+chunks=[];recorder=new MediaRecorder(combined,{mimeType:mime,videoBitsPerSecond:4000000});
+recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
+recorder.onstop=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(chunks,{type:mime}));a.download=`KOMPILASI_PLAYLIST.${mime.includes('mp4')?'mp4':'webm'}`;a.click();st.innerText='✅ Selesai! Video kompilasi otomatis terunduh.';isMerging=false;document.getElementById('mergeBtn').style.display='block';document.getElementById('stopBtn').style.display='none'};
+isMerging=true;curIdx=0;document.getElementById('mergeBtn').style.display='none';document.getElementById('stopBtn').style.display='block';recorder.start();drawLoop();playNextClip();
+}
+function playNextClip(){if(!isMerging)return;if(curIdx>=filesArr.length){stopMerge();return}const item=filesArr[curIdx];st.innerText=`🔴 Menggabungkan video ${curIdx+1}/${filesArr.length}: ${item.title}...`;const url=URL.createObjectURL(item.file);vidEl.src=url;vidEl.onended=()=>{URL.revokeObjectURL(url);curIdx++;playNextClip()};vidEl.play()}
+function stopMerge(){isMerging=false;if(vidEl)vidEl.pause();if(recorder&&recorder.state!=='inactive')recorder.stop()}
+function copyTS(b){const e=document.getElementById('tsOut');e.select();e.setSelectionRange(0,99999);navigator.clipboard.writeText(e.value);const o=b.innerText;b.innerText='Tersalin!';setTimeout(()=>b.innerText=o,1500)}
+</script>
+</body>
+</html>
