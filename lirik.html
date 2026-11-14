@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>1. Generator Lirik & SEO</title>
+<style>
+*{box-sizing:border-box;font-family:system-ui,sans-serif}body{background:#121212;color:#f0f0f0;margin:0;padding:12px;line-height:1.45}.container{max-width:650px;margin:0 auto}.back{color:#facc15;text-decoration:none;font-size:.85rem;font-weight:700;display:inline-block;margin-bottom:8px}h1{font-size:1.2rem;color:#facc15;margin:0 0 12px}.card{background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:12px}.track-card{background:#18181b;border:1px solid #3f3f46;border-left:4px solid #facc15;border-radius:10px;padding:12px;margin-bottom:12px}label{display:block;font-size:.8rem;font-weight:600;color:#d4d4d4;margin-bottom:4px}input,select,textarea{width:100%;background:#2a2a2a;color:#fff;border:1px solid #404040;border-radius:8px;padding:8px 10px;font-size:.86rem;margin-bottom:9px}.row{display:flex;gap:8px}.row>div{flex:1}.genre-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.genre-chip{background:#27272a;color:#d4d4d8;border:1px solid #3f3f46;border-radius:20px;padding:4px 11px;font-size:.78rem;cursor:pointer;user-select:none}.genre-chip.active{background:#facc15;color:#121212;border-color:#facc15;font-weight:700}.clear-genre{font-size:.75rem;color:#f87171;float:right;cursor:pointer;text-decoration:underline}button.main-btn{width:100%;background:linear-gradient(135deg,#facc15,#eab308);color:#121212;font-weight:700;font-size:.94rem;border:none;border-radius:8px;padding:11px;cursor:pointer}button.main-btn:disabled{opacity:.5}.copy-btn{background:#27272a;color:#facc15;border:1px solid #facc15;padding:3px 9px;font-size:.75rem;width:auto;float:right;margin-top:-2px;border-radius:6px;cursor:pointer}.error-msg{background:#450a0a;color:#fca5a5;padding:9px;border-radius:8px;font-size:.82rem;display:none;margin-bottom:10px}.progress-box{background:#172554;color:#93c5fd;padding:9px;border-radius:8px;font-size:.82rem;display:none;margin-bottom:10px;text-align:center;font-weight:600}.badge{display:inline-block;background:#14532d;color:#86efac;font-size:.7rem;padding:2px 8px;border-radius:999px;margin-bottom:6px}.section-title{font-size:.95rem;font-weight:700;color:#facc15;margin:14px 0 8px;border-bottom:1px solid #333;padding-bottom:5px}
+</style>
+</head>
+<body>
+<div class="container">
+<a href="index.html" class="back">← Kembali ke Menu</a>
+<h1>🎵 Generator Lirik, Style & SEO</h1>
+<div class="card">
+<label>API Key ClarioHub (Otomatis Tersimpan)</label>
+<input type="password" id="apiKey" placeholder="sk-clario-xxxxxxxxxxxxxxxx">
+<div class="row">
+<div><label>Target Bahasa</label><select id="langSelect"><option value="English">🇬🇧 Inggris (Global)</option><option value="Indonesian">🇮🇩 Indonesia (Lokal)</option></select></div>
+<div><label>Model AI</label><select id="modelSelect"><option value="clario/deepseek-v4-flash">deepseek-v4-flash</option><option value="clario/gemini-3.7-flash">gemini-3.7-flash</option><option value="clario/deepseek-v4-pro">deepseek-v4-pro</option><option value="clario/gpt-5.6-sol">gpt-5.6-sol</option></select></div>
+</div>
+<div class="row">
+<div><label>Karakter Vokal</label><select id="vocalSelect"><option value="smooth soulful female vocals, breathy and melodic">Wanita (Smooth/Deep)</option><option value="expressive warm male vocals, soulful phrasing">Pria (Hangat)</option><option value="raspy powerful rock male vocals">Pria (Rock/Power)</option><option value="sweet crystal-clear female vocals">Wanita (Pop/Merdu)</option><option value="male and female vocal harmony duet">Duet Pria & Wanita</option></select></div>
+<div><label>Tempo / Energi</label><select id="tempoSelect"><option value="124 BPM, deep groovy four-on-the-floor beat, warm sub-bass">Deep House (124 BPM)</option><option value="mid-tempo 105 BPM, bouncy chill groove">Santai/Reggae (105 BPM)</option><option value="slow tempo 88 BPM, deep emotional">Pelan/Syahdu (88 BPM)</option><option value="fast tempo 134 BPM, energetic club remix">Cepat/Club (134 BPM)</option></select></div>
+</div>
+<label>Dinamika Aransemen</label>
+<select id="arrangeSelect"><option value="dynamic">Kontras Dinamis (Verse Pelan -> Reff Meledak)</option><option value="groovy">Groovy Full Bass (Empuk & Mengayun)</option><option value="chill_acoustic">Akustik Hangat & Melodius</option></select>
+</div>
+<div class="card">
+<label>Pilih Genre (Klik >1 untuk Gabung) <span class="clear-genre" onclick="clearGenres()">Reset</span></label>
+<div class="genre-grid" id="genreGrid">
+<div class="genre-chip active" onclick="toggleGenre(this)" data-val="Deep House">Deep House</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Tropical House">Tropical House</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Afro House">Afro House</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Reggae">Reggae</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Indonesian Dangdut Koplo">Dangdut Koplo</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Pop Modern">Pop</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Rock">Rock</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Slow Rock">Slow Rock</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="EDM / Electronic">EDM</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Acoustic">Acoustic</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Jazz">Jazz</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="R&B / Soul">R&B</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Lo-Fi Chill">Lo-Fi</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Indie">Indie</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="Ska">Ska</div>
+<div class="genre-chip" onclick="toggleGenre(this)" data-val="House / Funkot">Funkot/House</div>
+</div>
+<label>🎨 Custom Genre Bebas (Opsional)</label>
+<input type="text" id="customGenre" placeholder="Contoh: Deep House + Reggae">
+</div>
+<div class="card">
+<label>Referensi Lagu & Artis (1 per Baris)</label>
+<textarea id="songList" rows="4" placeholder="Someone Like You - Adele&#10;Separuh Nafas - Dewa 19"></textarea>
+<label>Catatan Tema / Instrumen (Opsional)</label>
+<textarea id="extraNotes" rows="2" placeholder="Opsional..."></textarea>
+<div id="errorBox" class="error-msg"></div>
+<div id="progressBox" class="progress-box"></div>
+<button class="main-btn" id="generateBtn" onclick="startBatchGenerate()">⚡ Racik Lagu & SEO YouTube</button>
+</div>
+<div id="tracksContainer"></div>
+<div id="seoSection" style="display:none">
+<div class="section-title">📺 Paket Upload YouTube</div>
+<div class="card">
+<button class="copy-btn" onclick="copyText('ytTitle',this)">Salin Judul YT</button>
+<label>Judul Video YouTube</label><input type="text" id="ytTitle" readonly>
+<button class="copy-btn" onclick="copyText('ytDesc',this)">Salin Deskripsi</button>
+<label>Deskripsi, Tracklist & Hashtag</label><textarea id="ytDesc" rows="10" readonly></textarea>
+</div>
+</div>
+</div>
+<script>
+window.onload=()=>{const k=localStorage.getItem('clario_api_key');if(k)document.getElementById('apiKey').value=k};
+function toggleGenre(e){e.classList.toggle('active')}
+function clearGenres(){document.querySelectorAll('.genre-chip').forEach(c=>c.classList.remove('active'));document.getElementById('customGenre').value=''}
+function getSelectedGenres(){const a=Array.from(document.querySelectorAll('.genre-chip.active')).map(c=>c.getAttribute('data-val'));const v=document.getElementById('customGenre').value.trim();if(v)a.push(v);return a.join(' + ')}
+function extractJSON(t){let c=t.replace(/```json/gi,'').replace(/```/g,'').trim();const f=c.indexOf('{'),l=c.lastIndexOf('}');if(f!==-1&&l!==-1)c=c.substring(f,l+1);return JSON.parse(c)}
+async function callClarioAPI(k,m,s,u){const r=await fetch('https://api.clariohub.id/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${k}`},body:JSON.stringify({model:m,messages:[{role:'system',content:s},{role:'user',content:u}],temperature:0.82})});const d=await r.json();if(!r.ok)throw new Error(d.error?.message||`HTTP ${r.status}`);const raw=d.choices[0].message.content.trim();try{return extractJSON(raw)}catch(e){throw new Error(`Balasan AI bukan JSON: "${raw.substring(0,65)}..."`)}}
+async function startBatchGenerate(){
+const k=document.getElementById('apiKey').value.trim(),lang=document.getElementById('langSelect').value,m=document.getElementById('modelSelect').value,v=document.getElementById('vocalSelect').value,arr=document.getElementById('arrangeSelect').value,tmp=document.getElementById('tempoSelect').value,g=getSelectedGenres(),sRaw=document.getElementById('songList').value.trim(),ext=document.getElementById('extraNotes').value.trim(),btn=document.getElementById('generateBtn'),err=document.getElementById('errorBox'),prg=document.getElementById('progressBox'),tc=document.getElementById('tracksContainer'),seo=document.getElementById('seoSection');
+err.style.display='none';if(!k)return showErr('Masukkan API Key ClarioHub.');if(!g)return showErr('Pilih minimal 1 genre.');const songs=sRaw.split('\n').map(s=>s.trim()).filter(s=>s.length>0);if(!songs.length)return showErr('Masukkan minimal 1 judul lagu.');
+localStorage.setItem('clario_api_key',k);btn.disabled=true;tc.innerHTML=`<div class="section-title">🎶 Hasil Studio Mix (${escapeHtml(g)} • ${lang})</div>`;seo.style.display='none';prg.style.display='block';
+const arrInst=arr==='dynamic'?'KONTRAS DINAMIS: Buat [Verse 1] minimalis & santai, bangun ketegangan di [Pre-Chorus], lalu MELEDAK penuh energi di [Chorus] dengan beat drop dan sub-bass tebal. Tambahkan [Bridge] emosional sebelum Chorus terakhir.':arr==='groovy'?'GROOVY FULL BASS: Jaga ritme mengayun dengan variasi melodi instrumen solo di [Intro] dan [Interlude].':'AKUSTIK HANGAT: Fokus pada melodi hangat, bass empuk, dan harmoni vokal menyentuh.';
+const sys=`Kamu Music Arranger Studio dan penulis lagu profesional. Ciptakan LAGU ORISINAL BARU 100% bebas hak cipta dengan inspirasi suasana, emosi, dan ketukan (vibe) dari referensi pengguna.\nATURAN:\n1. BAHASA LIRIK & JUDUL: Wajib 100% bahasa ${lang} yang puitis & catchy.\n2. JANGAN menyalin lirik asli artis. Tulis judul & lirik baru sepenuhnya orisinal.\n3. ${arrInst}\n4. Padukan genre: ${g}.\n5. Metatag Suno bahasa Inggris: [Intro - Catchy Instrumental Hook], [Verse 1 - Minimalist Groove], [Pre-Chorus - Build-up], [Chorus - Explosive Beat Drop, Full Energy], [Instrumental Solo - Melodic Lead], [Verse 2], [Chorus - Full Energy], [Bridge - Emotional Stripped-back], [Final Chorus - Maximum Energy], [Outro - Melodic Fade Out]. Pakai baris baru (\\n), DILARANG tag <br>.\n6. STYLE PROMPT (Maks 195 karakter bahasa Inggris): Sertakan "catchy melody, dynamic arrangement, rich instrumentation, studio master mix, wide stereo, punchy warm sub-bass" + instrumen khas ${g}, tanpa nama artis.\n7. Balas HANYA JSON valid:\n{"judul_baru":"...","style_prompt":"...","lirik_lengkap":"[Intro - Catchy Instrumental Hook]\\n..."}`;
+const tracks=[];
+try{
+for(let i=0;i<songs.length;i++){
+const cs=songs[i];prg.innerText=`⏳ Meracik lagu ${i+1}/${songs.length} (${lang}): "${cs}"...`;
+const res=await callClarioAPI(k,m,sys,`Ciptakan 1 lagu orisinal baru bahasa ${lang}.\nInspirasi Vibe: ${cs}\nGenre: ${g}\nVokal: ${v}\nTempo: ${tmp}\n${ext?'Catatan:\n'+ext:''}`);
+tracks.push({original:cs,title:res.judul_baru});renderTrackCard(i+1,cs,res);
+}
+prg.innerText=`⏳ Menyusun SEO YouTube (${lang})...`;
+const seoRes=await callClarioAPI(k,m,`Pakar SEO YouTube musik. Buat judul High-CTR bahasa ${lang} (maks 75 karakter) dan deskripsi lengkap bahasa ${lang} berisi tracklist tepat ${tracks.length} lagu (timestamp 00:00, 03:30, dst.), ajakan subscribe, dan 15 hashtag genre ${g}. Balas HANYA JSON valid: {"youtube_title":"...","youtube_description":"..."}`,`Bahasa: ${lang}\nGenre: ${g}\nTotal: ${tracks.length} lagu\nDaftar:\n${tracks.map((t,i)=>`${i+1}. ${t.title}`).join('\n')}`);
+document.getElementById('ytTitle').value=(seoRes.youtube_title||'').replace(/<br\s*\/?>/gi,' ');document.getElementById('ytDesc').value=(seoRes.youtube_description||'').replace(/<br\s*\/?>/gi,'\n');document.getElementById('seoSection').style.display='block';prg.style.display='none';
+}catch(e){prg.style.display='none';showErr(`Terhenti: ${e.message}`)}finally{btn.disabled=false;btn.innerText='⚡ Racik Lagu & SEO YouTube'}
+}
+function renderTrackCard(idx,orig,res){
+const c=document.getElementById('tracksContainer'),d=document.createElement('div');d.className='track-card';
+d.innerHTML=`<span class="badge">Lagu #${idx} • Vibe: ${escapeHtml(orig)}</span><div style="margin-bottom:6px"><button class="copy-btn" onclick="copyText('t_${idx}',this)">Salin Judul</button><label>Judul Baru</label><input type="text" id="t_${idx}" readonly></div><div style="margin-bottom:6px"><button class="copy-btn" onclick="copyText('s_${idx}',this)">Salin Style</button><label>Style Utama</label><textarea id="s_${idx}" rows="3" readonly></textarea></div><div><button class="copy-btn" onclick="copyText('l_${idx}',this)">Salin Lirik</button><label>Lirik & Dinamika Suno</label><textarea id="l_${idx}" rows="10" readonly></textarea></div>`;
+c.appendChild(d);document.getElementById(`t_${idx}`).value=res.judul_baru||'';document.getElementById(`s_${idx}`).value=res.style_prompt||'';document.getElementById(`l_${idx}`).value=(res.lirik_lengkap||'').replace(/<br\s*\/?>/gi,'\n');
+}
+function showErr(m){const e=document.getElementById('errorBox');e.innerText=m;e.style.display='block'}
+function copyText(id,b){const e=document.getElementById(id);e.select();e.setSelectionRange(0,99999);navigator.clipboard.writeText(e.value);const o=b.innerText;b.innerText='Tersalin!';setTimeout(()=>b.innerText=o,1500)}
+function escapeHtml(t){return t?String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
+</script>
+</body>
+  </html>
